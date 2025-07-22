@@ -1,9 +1,16 @@
 import fitz
 import json
 import os
+from huggingface_hub import InferenceClient
 
 
-def extract_content_from_pdf(pdf_path):
+
+def extract_content_from_pdf(pdf_path: str) -> list:
+    """
+    extract text and image from given pdf
+    :param pdf_path: str having path to pdf
+    :return: extracted information in list having json object for every page
+    """
     doc = fitz.open(pdf_path)
     os.makedirs("extracted_images", exist_ok=True)
 
@@ -47,3 +54,24 @@ def extract_content_from_pdf(pdf_path):
             json.dump(output, f, indent=2)
 
         print("Extraction is Done!")
+
+        return output
+
+
+def generate_questions(data:list):
+    model_id = "Qwen/Qwen2.5-VL-72B-Instruct"
+    client = InferenceClient(model=model_id)
+
+    for page in data:
+
+
+
+        # Prepare your image (must be a URL or base64-encoded data)
+        image_url = "https://example.com/your-image.jpg"
+
+        payload = {
+            "inputs": "Describe what's happening in the image.",
+            "parameters": {"image": image_url}
+        }
+
+        response = client.post(json=payload)
