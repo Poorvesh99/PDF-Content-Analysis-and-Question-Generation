@@ -2,7 +2,8 @@ import fitz
 import json
 import os
 from huggingface_hub import InferenceClient
-
+import base64
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 
 def extract_content_from_pdf(pdf_path: str) -> list:
@@ -61,17 +62,45 @@ def extract_content_from_pdf(pdf_path: str) -> list:
 def generate_questions(data:list):
     model_id = "Qwen/Qwen2.5-VL-72B-Instruct"
     client = InferenceClient(model=model_id)
+    model = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
 
-    for page in data:
+    question_file = {}
 
+    for page_num, page in enumerate(data):
+        images = []
 
-
-        # Prepare your image (must be a URL or base64-encoded data)
-        image_url = "https://example.com/your-image.jpg"
+        for image in page['images']:
+            with open(image, "rb") as f:
+                img_b64 = base64.b64encode(f.read()).decode("utf-8")
+            images.append(img_b64)
 
         payload = {
-            "inputs": "Describe what's happening in the image.",
-            "parameters": {"image": image_url}
-        }
+            "inputs": (f"""
+        <image>{images[0]}</image>\n\n"
+        Based on the image and the text below, generate one multiple-choice question for a Grade 1 student.
 
+        Text: {page['text']}
+
+        Return your answer in JSON format like:
+        {{"question": "...","options": ["A", "B", "C", "D"],"answer": "B"}}
+        Begin your final answer with FINAL ANSWER:.
+        Don't include anthing but only answer
+        """)}
+
+        # retriving context from image
         response = client.post(json=payload)
+
+        # creating question based on context
+        messages = [
+            ("system",
+             "Create a question from human input in format like:{'question': '...','options': ['A', 'B', 'C', 'D'],'answer': 'B'}"),
+            ("human", json.loads(response.decode("utf-8"))[-1].get('generated_text')),
+        ]
+
+        result = model.invoke(messages)
+
+        question_file[page_num] = json.loads(result.content[14:])
+
+    with open('questions.json', 'w') as f:
+        json.dump(question_file, f, indent=4)
+    print('file_created')
