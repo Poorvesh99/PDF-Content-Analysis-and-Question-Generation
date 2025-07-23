@@ -111,6 +111,7 @@ def generate_questions(data:list):
             continue
         print(result.content[14:])
 
-    with open('questions.json', 'w') as f:
-        json.dump(question_file, f, indent=4)
+        with open('questions.json', 'w') as f:
+            json.dump(question_file, f, indent=4)
+
     print('file_created')
