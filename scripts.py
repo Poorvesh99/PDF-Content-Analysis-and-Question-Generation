@@ -5,7 +5,8 @@ from huggingface_hub import InferenceClient
 import base64
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-
+from dotenv import load_dotenv
+load_dotenv()
 def extract_content_from_pdf(pdf_path: str) -> list:
     """
     extract text and image from given pdf
@@ -18,6 +19,7 @@ def extract_content_from_pdf(pdf_path: str) -> list:
     total_text = []
     output = []
     page_num = 0
+
     for page in doc:
         # extract and store text
         text = page.get_text().encode("utf8")
@@ -51,16 +53,16 @@ def extract_content_from_pdf(pdf_path: str) -> list:
         output.append(page_content)
 
         # save final_output
-        with open("output.json", "w", encoding="utf-8") as f:
-            json.dump(output, f, indent=2)
+    with open("output.json", "w", encoding="utf-8") as f:
+        json.dump(output, f, indent=2)
 
-        print("Extraction is Done!")
+    print("Extraction is Done!")
 
-        return output
+    return output
 
 
 def generate_questions(data:list):
-    model_id = "Qwen/Qwen2.5-VL-72B-Instruct"
+    model_id = "meta-llama/Llama-3.2-11B-Vision-Instruct"
     client = InferenceClient(model=model_id)
     model = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
 
@@ -86,9 +88,13 @@ def generate_questions(data:list):
         Begin your final answer with FINAL ANSWER:.
         Don't include anthing but only answer
         """)}
-
-        # retriving context from image
-        response = client.post(json=payload)
+        attempt = 0
+        while attempt < 4:
+            try:
+                # retriving context from image
+                response = client.post(json=payload)
+            except:
+                attempt += 1
 
         # creating question based on context
         messages = [
@@ -100,6 +106,7 @@ def generate_questions(data:list):
         result = model.invoke(messages)
 
         question_file[page_num] = json.loads(result.content[14:])
+        print(result.content[14:])
 
     with open('questions.json', 'w') as f:
         json.dump(question_file, f, indent=4)
