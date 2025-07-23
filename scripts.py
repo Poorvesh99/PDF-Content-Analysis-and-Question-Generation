@@ -104,8 +104,11 @@ def generate_questions(data:list):
         ]
 
         result = model.invoke(messages)
-
-        question_file[page_num] = json.loads(result.content[14:])
+        try:
+            question_file[page_num] = json.loads(result.content[14:])
+        except:
+            print(result.content[14:])
+            continue
         print(result.content[14:])
 
     with open('questions.json', 'w') as f:
