@@ -78,7 +78,7 @@ def generate_questions(data:list):
 
         payload = {
             "inputs": (f"""
-        <image>{images[0]}</image>\n\n"
+        <image>{images[0] if len(images)>0 else " "}</image>\n\n"
         Based on the image and the text below, generate one multiple-choice question for a Grade 1 student.
 
         Text: {page['text']}
