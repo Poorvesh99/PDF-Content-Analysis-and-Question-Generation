@@ -1,0 +1,7 @@
+PyMuPDF
+Pillow
+base64
+python-dotenv
+json
+langchain_google_genai
+huggingface_hub
